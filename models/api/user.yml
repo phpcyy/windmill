@@ -1,0 +1,17 @@
+name: user
+description: user api
+path: /v1/user
+method: GET
+request:
+  param:
+    - {
+      name: app_id,
+      type: string,
+      required: true,
+    }
+  body: param.user
+response:
+  type: json
+  body:
+    type: response.page_result
+    data: vo.user

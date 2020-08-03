@@ -1,0 +1,38 @@
+name: User
+description: user object
+path: /user
+methods:
+  - GET
+  - POST
+  - PUT
+  - POST
+  - DELETE
+properties:
+  - {
+    name: Name,
+    type: string,
+    required: true,
+    editable: true,
+    deleteable: false,
+    queryable: true,
+    desc: "姓名",
+  }
+  - {
+    name: Age,
+    type: int,
+    perm: 0b0000,
+    hidden: true,
+    desc: "年龄",
+  }
+  - {
+    name: CarID,
+    type: int,
+    perm: 0b0000,
+  }
+
+assocs:
+  - {
+    name: Car,
+    assoc_object: Car,
+    assoc_key: [CarID, ID],
+  }

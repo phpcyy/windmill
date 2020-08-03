@@ -1,0 +1,15 @@
+name: result
+description: result common object
+properties:
+  - {
+    name: result_code,
+    type: string,
+  }
+  - {
+    name: message,
+    type: string,
+  }
+  - {
+    name: data,
+    type: object,
+  }

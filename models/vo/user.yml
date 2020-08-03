@@ -1,0 +1,13 @@
+name: user
+description: user view object
+properties:
+  - {
+    name: name,
+    type: string,
+    from: entity.car.name
+  }
+  - {
+    name: color,
+    type: string,
+    from: entity.car.name
+  }
