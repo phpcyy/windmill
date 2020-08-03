@@ -1,0 +1,26 @@
+name: Blog
+description: blog object
+path: /blog
+methods:
+  - GET
+  - POST
+  - PUT
+  - POST
+  - DELETE
+properties:
+  - {
+    name: Name,
+    type: string,
+    required: true,
+    editable: true,
+    deleteable: false,
+    queryable: true,
+    desc: "标题",
+  }
+  - {
+    name: Content,
+    type: string,
+    perm: 0b0000,
+    hidden: true,
+    desc: "内容",
+  }

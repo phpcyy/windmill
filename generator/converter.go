@@ -73,7 +73,7 @@ func (s *Scheme) GenAdd() ([]byte, error) {
 		values = append(values, fmt.Sprintf("%s.%s", param, property.Name))
 	}
 
-	str += fmt.Sprintf("stmt, err := Db.Prepare(\"insert into `user` set %s\")\n", strings.Join(fields, ","))
+	str += fmt.Sprintf("stmt, err := Db.Prepare(\"insert into `%s` set %s\")\n", strcase.ToSnake(s.Name), strings.Join(fields, ","))
 
 	str += fmt.Sprintf(`if err != nil {
 		return 0, err
@@ -127,7 +127,7 @@ func (s *Scheme) GenApi() string {
 			"fmt"
 			"io/ioutil"
 			"net/http"
-			"windmill/models"
+			"github.com/phpcyy/windmill/models"
 		)
 		func InitRouter() *http.ServeMux {
 			mux := http.ServeMux{}

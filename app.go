@@ -25,7 +25,12 @@ func main() {
 }
 
 func build(writer http.ResponseWriter, request *http.Request) {
-	apiFile, err := os.Open("models/entity/user.yml")
+	name := request.URL.Query().Get("scheme")
+	if name == "" {
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	apiFile, err := os.Open(fmt.Sprintf("models/entity/%s.yml", name))
 	if err != nil {
 		writer.WriteHeader(http.StatusNotFound)
 		return
