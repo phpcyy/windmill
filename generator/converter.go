@@ -57,7 +57,12 @@ func (s *Scheme) GenModel() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	lines = append(lines, addStr)
+	selectStr, err := s.GenList()
+	if err != nil {
+		return nil, err
+	}
+
+	lines = append(lines, addStr, selectStr)
 
 	return format.Source(bytes.Join(lines, []byte{'\n'}))
 }
@@ -86,7 +91,49 @@ func (s *Scheme) GenAdd() ([]byte, error) {
 	}
 
 	return res.LastInsertId()
-}`, strings.Join(values, ","))
+}
+`, strings.Join(values, ","))
+
+	return []byte(str), nil
+}
+
+func (s *Scheme) GenList() ([]byte, error) {
+	param := strcase.ToLowerCamel(s.Name)
+	str := fmt.Sprintf("func Get%sList() ([]*%s, error) {\n", s.Name, s.Name)
+
+	var fields []string
+	var values []string
+	for _, property := range s.Properties {
+		fields = append(fields, fmt.Sprintf("%s", strcase.ToSnake(property.Name)))
+		values = append(values, fmt.Sprintf("&%s.%s", param, property.Name))
+	}
+
+	str += fmt.Sprintf("stmt, err := Db.Prepare(\"select %s from `%s`\")\n", strings.Join(fields, ","), strcase.ToSnake(s.Name))
+
+	str += fmt.Sprintf(`
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, err
+	}
+
+	var %sList []*%s
+	for rows.Next() {
+		var %s %s
+		err = rows.Scan(%s)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		userList = append(%sList, &%s)
+	}
+
+	return %sList, nil
+}`, strcase.ToLowerCamel(s.Name), s.Name, strcase.ToLowerCamel(s.Name), s.Name, strings.Join(values, ","), strcase.ToLowerCamel(s.Name), strcase.ToLowerCamel(s.Name), strcase.ToLowerCamel(s.Name))
 
 	return []byte(str), nil
 }
@@ -117,10 +164,10 @@ func (s *Scheme) GenTable() (string, error) {
 	return fmt.Sprintf("create table if not exists `%s`(%s);", strcase.ToSnake(s.Name), strings.Join(fields, ",\n")), nil
 }
 
-func (s *Scheme) GenApi() string {
+func (s *Scheme) GenController() string {
 	param := strcase.ToLowerCamel(s.Name)
 	str := fmt.Sprintf(`
-		package main
+		package controllers
 
 		import (
 			"encoding/json"
@@ -129,10 +176,8 @@ func (s *Scheme) GenApi() string {
 			"net/http"
 			"github.com/phpcyy/windmill/models"
 		)
-		func InitRouter() *http.ServeMux {
-			mux := http.ServeMux{}
 
-			mux.HandleFunc("%s", func(writer http.ResponseWriter, request *http.Request) {
+		func Create%s(writer http.ResponseWriter, request *http.Request) {
 			bodyBytes, err := ioutil.ReadAll(request.Body)
 			if err != nil {
 				writer.WriteHeader(http.StatusBadRequest)
@@ -145,16 +190,15 @@ func (s *Scheme) GenApi() string {
 				writer.WriteHeader(http.StatusBadRequest)
 				return
 			}
-	
-	
+
 			id, err := %s.Add()
 			if err != nil {
 				writer.WriteHeader(http.StatusInternalServerError)
 				return
-			}`, s.Path, param, s.Name, param, param)
-	str += "\nwriter.Write([]byte(fmt.Sprintf(`{\"id\": %d}`, id)))\nreturn\n})"
-	str += `
-	return &mux
-}`
+			}
+			writer.Write([]byte(fmt.Sprintf("{\"id\": %%d}", id)))
+		})
+`, s.Name, param, s.Name, param, param)
+
 	return str
 }

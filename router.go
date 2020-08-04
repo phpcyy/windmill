@@ -4,8 +4,6 @@ import (
 	"net/http"
 )
 
-func InitRouter() *http.ServeMux {
-	mux := http.ServeMux{}
+func InitRouter(mux *http.ServeMux) {
 
-	return &mux
 }

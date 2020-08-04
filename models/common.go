@@ -1,6 +1,8 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 var Db *sql.DB
 
@@ -10,4 +12,8 @@ func InitDb() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+type User struct {
+	Name string
 }

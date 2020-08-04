@@ -7,7 +7,7 @@ import (
 )
 
 func TestDecode(t *testing.T) {
-	mf, err := os.Open("../models/entity/user.yml")
+	mf, err := os.Open("../models/entity/blog.yml")
 	if err != nil {
 		t.Error(err)
 		return
@@ -74,6 +74,6 @@ func TestScheme_GenApi(t *testing.T) {
 		return
 	}
 
-	str := scheme.genApi()
+	str := scheme.GenApi()
 	fmt.Println(str)
 }
