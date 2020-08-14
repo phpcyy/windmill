@@ -7,8 +7,9 @@ import (
 )
 import _ "github.com/go-sql-driver/mysql"
 
-func TestInitDb(t *testing.T) {
+func TestMain(m *testing.M) {
 	InitDb()
+	m.Run()
 }
 
 func Query() ([]*User, error) {
@@ -38,7 +39,6 @@ func Query() ([]*User, error) {
 }
 
 func TestQuery(t *testing.T) {
-	InitDb()
 	rows, err := Query()
 	if err != nil {
 		t.Error(err)

@@ -13,7 +13,3 @@ func InitDb() {
 		panic(err)
 	}
 }
-
-type User struct {
-	Name string
-}

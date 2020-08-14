@@ -57,6 +57,27 @@ func TestScheme_GenTable(t *testing.T) {
 	fmt.Println(tableStr)
 }
 
+func TestScheme_GenController(t *testing.T) {
+	mf, err := os.Open("../schemes/entity/user.yml")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	defer func() {
+		_ = mf.Close()
+	}()
+
+	scheme, err := Decode(mf)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	str := scheme.GenController()
+	fmt.Println(str)
+}
+
 func TestScheme_GenApi(t *testing.T) {
 	mf, err := os.Open("../models/entity/user.yml")
 	if err != nil {
@@ -74,6 +95,6 @@ func TestScheme_GenApi(t *testing.T) {
 		return
 	}
 
-	str := scheme.GenApi()
+	str := scheme.GenRoutes()
 	fmt.Println(str)
 }

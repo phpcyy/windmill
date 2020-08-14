@@ -4,9 +4,6 @@ path: /blog
 methods:
   - GET
   - POST
-  - PUT
-  - POST
-  - DELETE
 properties:
   - {
     name: Name,

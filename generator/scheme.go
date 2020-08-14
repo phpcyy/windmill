@@ -7,6 +7,7 @@ import (
 	"go/format"
 	"gopkg.in/yaml.v2"
 	"io"
+	"net/http"
 	"strings"
 )
 
@@ -22,6 +23,7 @@ type Scheme struct {
 	Description string
 	Path        string
 	Properties  []Property
+	Methods     []string
 }
 
 func Decode(r io.Reader) (*Scheme, error) {
@@ -48,7 +50,7 @@ func Decode(r io.Reader) (*Scheme, error) {
 }
 
 func (s *Scheme) GenModel() ([]byte, error) {
-	lines := [][]byte{[]byte("package models"), []byte(`import "time"`), []byte(fmt.Sprintf("type %s struct {", s.Name))}
+	lines := [][]byte{[]byte("package models"), []byte(`import "time"`), []byte(`import "log"`), []byte(fmt.Sprintf("type %s struct {", s.Name))}
 	for _, property := range s.Properties {
 		lines = append(lines, []byte(fmt.Sprintf("%s %s", property.Name, property.Type)))
 	}
@@ -129,11 +131,11 @@ func (s *Scheme) GenList() ([]byte, error) {
 			log.Println(err)
 			continue
 		}
-		userList = append(%sList, &%s)
+		%sList = append(%sList, &%s)
 	}
 
 	return %sList, nil
-}`, strcase.ToLowerCamel(s.Name), s.Name, strcase.ToLowerCamel(s.Name), s.Name, strings.Join(values, ","), strcase.ToLowerCamel(s.Name), strcase.ToLowerCamel(s.Name), strcase.ToLowerCamel(s.Name))
+}`, strcase.ToLowerCamel(s.Name), s.Name, strcase.ToLowerCamel(s.Name), s.Name, strings.Join(values, ","), strcase.ToLowerCamel(s.Name), strcase.ToLowerCamel(s.Name), strcase.ToLowerCamel(s.Name), strcase.ToLowerCamel(s.Name))
 
 	return []byte(str), nil
 }
@@ -167,38 +169,69 @@ func (s *Scheme) GenTable() (string, error) {
 func (s *Scheme) GenController() string {
 	param := strcase.ToLowerCamel(s.Name)
 	str := fmt.Sprintf(`
-		package controllers
+package controllers
 
-		import (
-			"encoding/json"
-			"fmt"
-			"io/ioutil"
-			"net/http"
-			"github.com/phpcyy/windmill/models"
-		)
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"github.com/phpcyy/windmill/models"
+)
 
-		func Create%s(writer http.ResponseWriter, request *http.Request) {
-			bodyBytes, err := ioutil.ReadAll(request.Body)
-			if err != nil {
-				writer.WriteHeader(http.StatusBadRequest)
-				return
-			}
+func Create%s(writer http.ResponseWriter, request *http.Request) {
+	bodyBytes, err := ioutil.ReadAll(request.Body)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-			%s := models.%s{}
-			err = json.Unmarshal(bodyBytes, &%s)
-			if err != nil {
-				writer.WriteHeader(http.StatusBadRequest)
-				return
-			}
+	%s := models.%s{}
+	err = json.Unmarshal(bodyBytes, &%s)
+	if err != nil {
+		writer.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-			id, err := %s.Add()
-			if err != nil {
-				writer.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			writer.Write([]byte(fmt.Sprintf("{\"id\": %%d}", id)))
-		})
-`, s.Name, param, s.Name, param, param)
+	id, err := %s.Add()
+	if err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	_, _ = writer.Write([]byte(fmt.Sprintf("{\"id\": %%d}", id)))
+}
+
+func Get%sList(writer http.ResponseWriter, request *http.Request) {
+	%sList, err := models.Get%sList()
+	if err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	response, err := json.Marshal(%sList)
+	if err != nil {
+		writer.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	_, _ = writer.Write(response)
+}
+`, s.Name, param, s.Name, param, param, s.Name, param, s.Name, param)
 
 	return str
+}
+
+func (s *Scheme) GenRoutes() []string {
+	routes := make([]string, 0)
+	for _, method := range s.Methods {
+		action := ""
+		switch method {
+		case http.MethodGet:
+			action = "Get" + s.Name + "List"
+		case http.MethodPost:
+			action = "Create" + s.Name
+		}
+		routes = append(routes, fmt.Sprintf(`router.HandleFunc("/%s", controllers.%s).Methods("%s")`, strcase.ToLowerCamel(s.Name), action, method))
+	}
+	return routes
 }
